@@ -63,3 +63,4 @@ def update_graph(selected_region):
 # Run the app
 if __name__ == '__main__':
     app.run(debug=True)
+server = app.server
