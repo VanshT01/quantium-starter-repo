@@ -1,0 +1,17 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+}
+
+h1 {
+    color: #333;
+    text-align: center;
+}
+
+.radio-items {
+    margin-bottom: 20px;
+}
+
+.graph-container {
+    margin-top: 20px;
+}

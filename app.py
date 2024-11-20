@@ -1,58 +1,65 @@
-from dash import Dash, dcc, html
+from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
 
-# Load the processed sales data
+# Load the formatted sales data
 df = pd.read_csv("formatted_sales_data.csv")
 
-# Convert the 'date' column to datetime and sort the data
-df['date'] = pd.to_datetime(df['date'])
-df = df.sort_values(by='date')
+# Create the Dash app
+app = Dash(__name__, external_stylesheets=['style.css'])
 
-# Create the line chart
-fig = px.line(
-    df,
-    x="date",
-    y="sales",
-    color="region",
-    title="Sales Over Time by Region",
-    labels={"date": "Date", "sales": "Sales ($)"}
-)
+# App Layout
+app.layout = html.Div(style={'backgroundColor': '#f9f9f9', 'padding': '20px'}, children=[
+    html.H1('Pink Morsel Sales Visualizer', style={'textAlign': 'center', 'color': '#333'}),
 
-# Add vertical line for price change using add_shape
-fig.add_shape(
-    type="line",
-    x0=pd.Timestamp("2021-01-15"),
-    x1=pd.Timestamp("2021-01-15"),
-    y0=0,
-    y1=df['sales'].max(),  # Extend the line to the max Y-axis value
-    line=dict(
-        color="red",
-        dash="dash"
-    ),
-    xref="x",
-    yref="y"
-)
+    # Radio button for region filtering
+    html.Div([
+        dcc.RadioItems(
+            id='region-filter',
+            options=[
+                {'label': 'North', 'value': 'north'},
+                {'label': 'East', 'value': 'east'},
+                {'label': 'South', 'value': 'south'},
+                {'label': 'West', 'value': 'west'},
+                {'label': 'All', 'value': 'all'}
+            ],
+            value='all',
+            labelStyle={'display': 'inline-block', 'margin-right': '10px'}
+        )
+    ], style={'margin-bottom': '20px'}),
 
-# Initialize the Dash app
-app = Dash(__name__)
-
-# Define the app layout
-app.layout = html.Div(children=[
-    html.H1(
-        children="Soul Foods Pink Morsel Sales Visualizer",
-        style={"textAlign": "center"}
-    ),
-    html.P(
-        children="Visualizing Pink Morsel sales data to answer: Were sales higher before or after the price change?",
-        style={"textAlign": "center"}
-    ),
-    dcc.Graph(
-        id="sales-line-chart",
-        figure=fig
-    )
+    # Sales graph
+    dcc.Graph(id='sales-graph', style={'margin-top': '20px'}),
 ])
 
-# Run the Dash app
-if __name__ == "__main__":
+# Callback to update the graph based on the selected region
+@app.callback(
+    Output('sales-graph', 'figure'),
+    Input('region-filter', 'value')
+)
+def update_graph(selected_region):
+    # Filter data based on selected region
+    if selected_region == 'all':
+        filtered_df = df
+    else:
+        filtered_df = df[df['region'] == selected_region]
+
+    # Create the line chart
+    fig = px.line(
+        filtered_df,
+        x='date',
+        y='sales',
+        title=f"Sales Data for {selected_region.capitalize()} Region" if selected_region != 'all' else "Sales Data for All Regions",
+        labels={'date': 'Date', 'sales': 'Total Sales'}
+    )
+    fig.update_layout(
+        plot_bgcolor='#f9f9f9',
+        paper_bgcolor='#f9f9f9',
+        font_color='#333',
+        title_x=0.5
+    )
+    return fig
+
+# Run the app
+if __name__ == '__main__':
     app.run(debug=True)
